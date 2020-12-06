@@ -797,6 +797,7 @@ deps_/home/lololol/Desktop/lock_free/list/lockfree_list.o := \
   include/linux/delay.h \
   arch/x86/include/asm/delay.h \
   include/asm-generic/delay.h \
+  /usr/lib/gcc/x86_64-linux-gnu/9/include/stdbool.h \
 
 /home/lololol/Desktop/lock_free/list/lockfree_list.o: $(deps_/home/lololol/Desktop/lock_free/list/lockfree_list.o)
 
