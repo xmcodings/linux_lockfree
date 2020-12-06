@@ -13,9 +13,9 @@
 
 
 
-#define lflist_for_each(pos, lfhead)				\
-	for (pos = lfhead->next; /*exclude first*/	\
-	     pos != lfhead;			\
+#define lflist_for_each(pos, slisthead)				\
+	for (pos = slisthead->next; /*exclude first*/	\
+	     pos != slisthead;			\
 	     pos = pos->next)
 
 struct kernel_node{
@@ -26,19 +26,14 @@ struct kernel_node{
 struct listnode{
 	struct listnode *next;
 	int data;
-}
+};
 
-struct node *head;
-struct node *slisthead;
+struct listnode *slisthead;
 
 struct list_head klist;
 ktime_t start, end;
 s64 kernelD_time, improveD_time;
 
-void atomic_insert(void){
-	struct lflist_task newtask;
-
-}
 
 void slist_push(int ins_data){
 	struct listnode *new;
@@ -62,8 +57,6 @@ void compareInsert(void){
 	struct list_head klist;
 	int i;
 	INIT_LIST_HEAD(&klist);
-	head->prev = head;
-	head->next = head;
 	improveD_time = 0;
 
 	start = ktime_get();
@@ -132,11 +125,11 @@ void print_lists(void){
 
 	// lflist read example
 	printk("printing lf list \n");
-	struct node *current_lfnode;
+	struct listnode *current_lfnode;
 
-	current_lfnode = head->next; // from first node
+	current_lfnode = slisthead; // from first node
 	
-	lflist_for_each(current_lfnode, head){
+	lflist_for_each(current_lfnode, slisthead){
 		if(current_lfnode == NULL){
 			break;
 		}
