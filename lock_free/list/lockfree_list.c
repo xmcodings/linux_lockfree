@@ -1,4 +1,4 @@
-#define NUMBER_OF_DATA 100000
+#define NUMBER_OF_DATA 100
 #define NUMBER_OF_THREAD 4
 
 #define DFAULT_THREAD 2
@@ -46,25 +46,36 @@ void slist_push(int ins_data){
 	new->data = ins_data;
 
 	do{
-		new->next = slisthead;
-	}while(!__sync_bool_compare_and_swap(&slisthead, new->next, new));
-	//printk("push data %d \n", ins_data);
-}
-
-bool slist_contains(int data){
+		new->next = slisthead->next;
+		printk("push data %d \n", ins_data);
+	}while(!__sync_bool_compare_and_swap(&slisthead->next, new->next, new));
 	
-
-
 }
+
+bool list_delete_tail(void){
+	struct listnode *current_lfnode;
+	struct listnode *temp;
+	current_lfnode = slisthead->next;
+	while(current_lfnode){
+		temp = current_lfnode;
+		if(__sync_bool_compare_and_swap(&slisthead->next, current_lfnode, current_lfnode->next)){
+			printk("delete tail %d \n", current_lfnode->data);
+			kfree(temp);
+			return true;
+		}
+	}
+	return false;
+}
+
 
 
 static int __sync_slist_push(void *ins_data){
-	struct listnode *new;
+	
 	start = ktime_get();
 	int* ins = (int*)ins_data;
 	
 	int i;
-	for(i = 0; i < 25000; i++){
+	for(i = 0; i < 25; i++){
 		// new = kmalloc(sizeof(struct listnode),GFP_KERNEL);
 		// new->data = i;
 		// do{
@@ -81,12 +92,6 @@ static int __sync_slist_push(void *ins_data){
 	do_exit(0);
 }
 
-
-
-void insert_after(int elem){
-
-
-}
 
 
 void compareInsert(void){
@@ -115,12 +120,13 @@ void compareInsert(void){
 	printk("Imporve data structure -> %lld ns\n",(long long)improveD_time);
 	printk("Imporve %lld ns\n\n",(long long)(kernelD_time-improveD_time));
 }
+
 static int list_push(void *data){
 	int i;
 	INIT_LIST_HEAD(&klist);
 	kernelD_time = 0;
 	//start = ktime_get();
-	for(i=0; i<25000; i++){
+	for(i=0; i<25; i++){
 		struct kernel_node *new = kmalloc(sizeof(struct kernel_node),GFP_KERNEL);
 		new->data = i;
 		spin_lock(&insert_lock);
@@ -142,15 +148,16 @@ void init_node(void){
 	// lflist init
 	slisthead = kmalloc(sizeof(struct listnode),GFP_KERNEL);
 	
+	slisthead->next = slisthead;
 	/* thread atomic */
 
 	 start = ktime_get();
 	
 	for(i=0; i<NUMBER_OF_THREAD; i++){
-		kthread_run(__sync_slist_push, NULL, "insert_function");
-		//kthread_run(list_push, NULL, "insert_function");
+		kthread_run(__sync_slist_push, NULL, "insert_atomic_function");
+		// kthread_run(list_push, NULL, "insert_spinlock_function");
 	}		
-
+	msleep(2000);
 
 	/* atomic push */
 
@@ -166,28 +173,46 @@ void init_node(void){
 
 void print_lists(void){
 
-	printk("printing kernel list \n");
-	struct kernel_node *k_node;
+	// printk("printing kernel list \n");
+	// struct kernel_node *k_node;
 	
-	// read example
+	// // read example
 
 
-	list_for_each_entry(k_node, &klist, list){
-		// printk("klist value: %d\n", k_node->data);
-	}
+	// list_for_each_entry(k_node, &klist, list){
+	// 	// printk("klist value: %d\n", k_node->data);
+	// }
 
-	// lflist read example
-	printk("printing lf list \n");
+	// // lflist read example
+	// printk("printing lf list \n");
 	struct listnode *current_lfnode;
 
 	current_lfnode = slisthead; // from first node
 	
 	lflist_for_each(current_lfnode, slisthead){
 		if(current_lfnode == NULL){
+			printk("null detected \n");
 			break;
 		}
-		// printk("lflist_value: %d\n", current_lfnode->data);
+		printk("lflist_value: %d\n", current_lfnode->data);
 	}
+	msleep(3000);
+	/* pop test */
+	bool sex;
+	int i = 0;
+	for(i = 0; i <5; i++){
+		sex = list_delete_tail();
+	}
+	current_lfnode = slisthead; // from first node
+
+	lflist_for_each(current_lfnode, slisthead){
+		if(current_lfnode == NULL){
+			printk("null detected \n");
+			break;
+		}
+		printk("del after lflist_value: %d\n", current_lfnode->data);
+	}
+
 }
 
 void contains_thread(void *data){
@@ -211,7 +236,7 @@ static int __init list_module_init(void)
 	//compareDelete();
 	//compareTraverse();
 	init_node();
-	//print_lists();
+	print_lists();
 
 	return 0;
 }
