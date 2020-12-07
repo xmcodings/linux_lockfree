@@ -1,4 +1,4 @@
-obj-m := lockfree_list.o
+obj-m := lockFree_list.o
 
 KERNEL_DIR := /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)
